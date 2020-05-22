@@ -1,0 +1,324 @@
+<!doctype html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:html5="http://www.w3.org/1999/xhtml">
+
+<head>
+
+    <meta charset="utf-8">
+
+    <title>js照片墙</title>
+
+    <meta http-equiv="X-UA-Compatible" content="edge">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="Keywords" content="js照片墙">
+
+    <meta name="description" content="js照片墙">
+
+    <link href="css/style.css" rel="stylesheet">
+
+    <script src="move.js"></script>
+
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+        }
+        
+        li {
+            list-style: none;
+        }
+        
+        ul {
+            width: 660px;
+            height: 510px;
+            background: #ccc;
+            margin: 20px auto;
+        }
+        
+        li {
+            width: 200px;
+            height: 150px;
+            margin: 10px;
+            float: left;
+        }
+    </style>
+
+    <script>
+        /*
+
+                            var arr=['a','b','c','d','e','d','f'];
+
+                            var pos = arr.lastIndexOf('d');
+
+                            alert(pos);
+
+                            */
+
+        window.onload = function() {
+
+            var aLi = document.querySelectorAll('li');
+
+            var oInput = document.querySelector('#btn');
+
+            var pos = [];
+
+            var len = aLi.length;
+
+            var izIndex = 2;
+
+            //布局转换
+            for (var i = 0; i < len; i++) {
+
+                pos.push([aLi[i].offsetLeft, aLi[i].offsetTop]);
+
+            }
+
+            for (var i = 0; i < len; i++) {
+
+                aLi[i].style.left = pos[i][0] + 'px';
+
+                aLi[i].style.top = pos[i][1] + 'px';
+
+                aLi[i].style.position = 'absolute';
+
+                aLi[i].style.margin = '0px';
+
+            }
+
+            for (var i = 0; i < len; i++) {
+
+                aLi[i].index = i;
+
+                setDrag(aLi[i]);
+
+            }
+
+            oInput.onclick = function() {
+
+                var randomArr = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+
+                randomArr.sort(function(num1, num2) {
+
+                    return Math.random() - 0.5;
+
+                })
+
+                for (var i = 0; i < len; i++) {
+
+                    //增加随机位置的情况
+
+                    startMove(aLi[i], {
+                        left: pos[randomArr[i]][0],
+                        top: pos[randomArr[i]][1]
+                    });
+
+                    //修正索引
+
+                    aLi[i].index = randomArr[i];
+
+                }
+
+            }
+
+            //拖拽
+
+            function setDrag(obj) {
+
+                obj.onmousedown = function(ev) {
+
+                    izIndex++;
+
+                    obj.style.zIndex = izIndex;
+
+                    var ev = ev || event;
+
+                    var disX = ev.clientX - obj.offsetLeft;
+
+                    var disY = ev.clientY - obj.offsetTop;
+
+                    document.onmousemove = function(ev) {
+
+                        var ev = ev || event;
+
+                        obj.style.left = ev.clientX - disX + 'px';
+
+                        obj.style.top = ev.clientY - disY + 'px';
+
+                        for (var i = 0; i < len; i++) {
+
+                            aLi[i].style.border = 'none';
+
+                        }
+
+                        var nL = nearLi(obj);
+
+                        if (nL) {
+
+                            nL.style.border = '2px solid red';
+
+                        }
+
+                    }
+
+                    document.onmouseup = function() {
+
+                        document.onmousemove = null;
+
+                        document.onmouseup = null;
+
+                        var nL = nearLi(obj);
+
+                        if (nL) {
+
+                            nL.style.border = '2px solid red';
+
+                            startMove(obj, {
+                                left: pos[nL.index][0],
+                                top: pos[nL.index][1]
+                            });
+
+                            startMove(nL, {
+                                left: pos[obj.index][0],
+                                top: pos[obj.index][1]
+                            });
+
+                            var tmp = nL.index;
+
+                            nL.index = obj.index;
+
+                            obj.index = tmp;
+
+                            nL.style.border = '';
+
+                        } else {
+
+                            startMove(obj, {
+                                left: pos[obj.index][0],
+                                top: pos[obj.index][1]
+                            });
+
+                        }
+
+                    }
+
+                    return false;
+
+                }
+
+            }
+
+            //检测是否有碰撞
+
+            function isDump(obj1, obj2) {
+
+                var l1 = obj1.offsetLeft;
+
+                var r1 = l1 + obj1.offsetWidth;
+
+                var t1 = obj1.offsetTop;
+
+                var b1 = obj1.offsetHeight + t1;
+                var l2 = obj2.offsetLeft;
+
+                var r2 = l2 + obj2.offsetWidth;
+
+                var t2 = obj2.offsetTop;
+
+                var b2 = obj2.offsetHeight + t2;
+
+                if (b2 < t1 || l2 > r1 || r2 < l1 || t2 > b1) {
+
+                    return false;
+
+                } else {
+
+                    return true;
+
+                }
+
+            }
+
+            //寻找最近的节点
+
+            function nearLi(obj) {
+
+                var index = -1;
+
+                var value = 9999;
+
+                for (var i = 0; i < len; i++) {
+
+                    if (isDump(obj, aLi[i]) && obj != aLi[i]) {
+
+                        var c = getDis(obj, aLi[i]);
+
+                        if (c < value) {
+
+                            value = c;
+
+                            index = i;
+
+                        }
+
+                    }
+
+                }
+
+                if (index != -1) {
+
+                    return aLi[index];
+
+                } else {
+
+                    return false;
+
+                }
+
+            }
+
+            function getDis(obj1, obj2) {
+
+                var x = obj1.offsetLeft - obj2.offsetLeft;
+
+                var y = obj1.offsetTop - obj2.offsetTop;
+
+                return Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+
+            }
+
+        }
+    </script>
+
+</head>
+
+<body>
+
+    <button id="btn">click</button>
+
+    <ul>
+
+        <li><img src="1l.jpg" width="200px" height="150px"></li>
+
+        <li><img src="2l.jpg" width="200px" height="150px"></li>
+
+        <li><img src="3l.jpg" width="200px" height="150px"></li>
+
+        <li><img src="4l.jpg" width="200px" height="150px"></li>
+
+        <li><img src="5l.jpg" width="200px" height="150px"></li>
+
+        <li><img src="6l.jpg" width="200px" height="150px"></li>
+
+        <li><img src="1l.jpg" width="200px" height="150px"></li>
+
+        <li><img src="2l.jpg" width="200px" height="150px"></li>
+
+        <li><img src="4l.jpg" width="200px" height="150px"></li>
+
+    </ul>
+
+</body>
+
+</html>
